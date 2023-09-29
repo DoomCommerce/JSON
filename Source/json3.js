@@ -1,6 +1,8 @@
 
 export { jsonify }
 
+import { toPaddedString , quote } from './Quote'
+
 // A set of types used to distinguish objects from primitives.
 var objectTypes = {
     "function": true,
@@ -12,7 +14,6 @@ var objectTypes = {
 // Convenience aliases.
 var objectProto = Object.prototype,
     getClass = objectProto.toString,
-    isProperty = objectProto.hasOwnProperty,
     undefined;
 
 // Internal: Contains `try...catch` logic used by other functions.
@@ -48,7 +49,7 @@ var functionClass = "[object Function]",
         dontEnums = new Properties();
         for (property in dontEnums) {
         // Ignore all properties inherited from `Object.prototype`.
-        if (isProperty.call(dontEnums, property)) {
+        if (Object.hasOwn(dontEnums, property)) {
             size++;
         }
         }
@@ -62,17 +63,16 @@ var functionClass = "[object Function]",
         // properties.
         forOwn = function (object, callback) {
             var isFunction = getClass.call(object) == functionClass, property, length;
-            var hasProperty = !isFunction && typeof object.constructor != "function" && objectTypes[typeof object.hasOwnProperty] && object.hasOwnProperty || isProperty;
             for (property in object) {
             // Gecko <= 1.0 enumerates the `prototype` property of functions under
             // certain conditions; IE does not.
-            if (!(isFunction && property == "prototype") && hasProperty.call(object, property)) {
+            if (!(isFunction && property == "prototype") && Object.hasOwn(object, property)) {
                 callback(property);
             }
             }
             // Manually invoke the callback for each non-enumerable property.
             for (length = dontEnums.length; property = dontEnums[--length];) {
-            if (hasProperty.call(object, property)) {
+            if (Object.hasOwn(object, property)) {
                 callback(property);
             }
             }
@@ -82,13 +82,13 @@ var functionClass = "[object Function]",
         forOwn = function (object, callback) {
             var isFunction = getClass.call(object) == functionClass, property, isConstructor;
             for (property in object) {
-            if (!(isFunction && property == "prototype") && isProperty.call(object, property) && !(isConstructor = property === "constructor")) {
+            if (!(isFunction && property == "prototype") && Object.hasOwn(object, property) && !(isConstructor = property === "constructor")) {
                 callback(property);
             }
             }
             // Manually invoke the callback for the `constructor` property due to
             // cross-environment inconsistencies.
-            if (isConstructor || isProperty.call(object, (property = "constructor"))) {
+            if (isConstructor || Object.hasOwn(object, (property = "constructor"))) {
             callback(property);
             }
         };
@@ -104,118 +104,10 @@ var functionClass = "[object Function]",
 // argument may be either a string or number that specifies the indentation
 // level of the output.
 
-// Internal: A map of control characters and their escaped equivalents.
-var Escapes = {
-92: "\\\\",
-34: '\\"',
-8: "\\b",
-12: "\\f",
-10: "\\n",
-13: "\\r",
-9: "\\t"
-};
 
-// Internal: Converts `value` into a zero-padded string such that its
-// length is at least equal to `width`. The `width` must be <= 6.
-var leadingZeroes = "000000";
-var toPaddedString = function (width, value) {
-// The `|| 0` expression is necessary to work around a bug in
-// Opera <= 7.54u2 where `0 == -0`, but `String(-0) !== "0"`.
-return (leadingZeroes + (value || 0)).slice(-width);
-};
-
-// Internal: Serializes a date object.
-var serializeDate = function (value) {
-var getData, year, month, date, time, hours, minutes, seconds, milliseconds;
-// Define additional utility methods if the `Date` methods are buggy.
-if (!isExtended) {
-    var floor = Math.floor;
-    // A mapping between the months of the year and the number of days between
-    // January 1st and the first of the respective month.
-    var Months = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    // Internal: Calculates the number of days between the Unix epoch and the
-    // first day of the given month.
-    var getDay = function (year, month) {
-    return Months[month] + 365 * (year - 1970) + floor((year - 1969 + (month = +(month > 1))) / 4) - floor((year - 1901 + month) / 100) + floor((year - 1601 + month) / 400);
-    };
-    getData = function (value) {
-    // Manually compute the year, month, date, hours, minutes,
-    // seconds, and milliseconds if the `getUTC*` methods are
-    // buggy. Adapted from @Yaffle's `date-shim` project.
-    date = floor(value / 864e5);
-    for (year = floor(date / 365.2425) + 1970 - 1; getDay(year + 1, 0) <= date; year++);
-    for (month = floor((date - getDay(year, 0)) / 30.42); getDay(year, month + 1) <= date; month++);
-    date = 1 + date - getDay(year, month);
-    // The `time` value specifies the time within the day (see ES
-    // 5.1 section 15.9.1.2). The formula `(A % B + B) % B` is used
-    // to compute `A modulo B`, as the `%` operator does not
-    // correspond to the `modulo` operation for negative numbers.
-    time = (value % 864e5 + 864e5) % 864e5;
-    // The hours, minutes, seconds, and milliseconds are obtained by
-    // decomposing the time within the day. See section 15.9.1.10.
-    hours = floor(time / 36e5) % 24;
-    minutes = floor(time / 6e4) % 60;
-    seconds = floor(time / 1e3) % 60;
-    milliseconds = time % 1e3;
-    };
-} else {
-    getData = function (value) {
-    year = value.getUTCFullYear();
-    month = value.getUTCMonth();
-    date = value.getUTCDate();
-    hours = value.getUTCHours();
-    minutes = value.getUTCMinutes();
-    seconds = value.getUTCSeconds();
-    milliseconds = value.getUTCMilliseconds();
-    };
+function serializeDate ( millis ){
+    return new Date( millis ).toISOString()
 }
-serializeDate = function (value) {
-    if (value > -1 / 0 && value < 1 / 0) {
-    // Dates are serialized according to the `Date#toJSON` method
-    // specified in ES 5.1 section 15.9.5.44. See section 15.9.1.15
-    // for the ISO 8601 date time string format.
-    getData(value);
-    // Serialize extended years correctly.
-    value = (year <= 0 || year >= 1e4 ? (year < 0 ? "-" : "+") + toPaddedString(6, year < 0 ? -year : year) : toPaddedString(4, year)) +
-    "-" + toPaddedString(2, month + 1) + "-" + toPaddedString(2, date) +
-    // Months, dates, hours, minutes, and seconds should have two
-    // digits; milliseconds should have three.
-    "T" + toPaddedString(2, hours) + ":" + toPaddedString(2, minutes) + ":" + toPaddedString(2, seconds) +
-    // Milliseconds are optional in ES 5.0, but required in 5.1.
-    "." + toPaddedString(3, milliseconds) + "Z";
-    year = month = date = hours = minutes = seconds = milliseconds = null;
-    } else {
-    value = null;
-    }
-    return value;
-};
-return serializeDate(value);
-};
-
-
-// Internal: Double-quotes a string `value`, replacing all ASCII control
-// characters (characters with code unit values between 0 and 31) with
-// their escaped equivalents. This is an implementation of the
-// `Quote(value)` operation defined in ES 5.1 section 15.12.3.
-var unicodePrefix = "\\u00";
-var escapeChar = function (character) {
-    var charCode = character.charCodeAt(0), escaped = Escapes[charCode];
-    if (escaped) {
-    return escaped;
-    }
-    return unicodePrefix + toPaddedString(2, charCode.toString(16));
-};
-var reEscape = /[\x00-\x1f\x22\x5c]/g;
-var quote = function (value) {
-    reEscape.lastIndex = 0;
-    return '"' +
-    (
-        reEscape.test(value)
-        ? value.replace(reEscape, escapeChar)
-        : value
-    ) +
-    '"';
-};
 
 // Internal: Recursively serializes an object. Implements the
 // `Str(key, holder)`, `JO(value)`, and `JA(value)` operations.
