@@ -1,103 +1,72 @@
 {
-  "name": "json3",
-  "version": "3.3.3",
-  "description": "A JSON polyfill for older JavaScript platforms.",
-  "homepage": "https://bestiejs.github.io/json3",
-  "main": "./lib/json3",
-  "keywords": [
-    "json",
-    "spec",
-    "ecma",
-    "es5",
-    "lexer",
-    "parser",
-    "stringify"
-  ],
-  "license": "MIT",
-  "author": {
-    "name": "Kit Cambridge",
-    "email": "github@kitcambridge.be",
-    "web": "http://kitcambridge.be/"
-  },
-  "maintainers": [
-    {
-      "name": "Kit Cambridge",
-      "email": "github@kitcambridge.be",
-      "web": "http://kitcambridge.be/"
+    "name" : "@doomcommerce/json",
+    "version": "1.0.0",
+    "description": "Pretty JSON stringification library.",
+    "homepage": "https://github.com/DoomCommerce/JSON",
+    "license": "MIT",
+
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/DoomCommerce/JSON.git"
     },
-    {
-      "name": "Benjamin Tan",
-      "email": "demoneaux@gmail.com",
-      "web": "https://d10.github.io/"
-    }
-  ],
-  "contributors": [
-    {
-      "name": "Mangled Deutz",
-      "email": "olivier@webitup.fr",
-      "web": "http://tech.roxee.tv/"
+
+    "bugs": {
+        "url": "https://github.com/DoomCommerce/JSON/issues"
     },
-    {
-      "name": "Øyvind Sean Kinsey",
-      "email": "oyvind@kinsey.no",
-      "web": "http://fb.me/ok"
+
+    "keywords": [
+        "stringify" ,
+        "pretty" ,
+        "json"
+    ],
+
+    "author": {
+        "name": "LowerDimensions",
+        "email": "LowerDimensions@gmail.com",
+        "url": "https://github.com/LowerDimensions"
     },
-    {
-      "name": "Oskar Schöldström",
-      "email": "public@oxy.fi",
-      "web": "http://oxy.fi/"
-    },
-    {
-      "name": "Kiryl Yermakou",
-      "email": "rma4ok@gmail.com",
-      "web": "https://github.com/rma4ok"
-    }
-  ],
-  "bugs": {
-    "url": "https://github.com/bestiejs/json3/issues"
-  },
-  "scripts": {
-    "test": "node test/test_*.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/bestiejs/json3.git"
-  },
-  "files": [
-    "README.md",
-    "LICENSE",
-    "lib/json3.js",
-    "lib/json3.min.js"
-  ],
-  "jam": {
-    "main": "./lib/json3.js",
-    "includes": [
-      "README.md",
-      "LICENSE",
-      "lib/json3.js",
-      "lib/json3.min.js"
-    ]
-  },
-  "volo": {
-    "type": "directory",
-    "ignore": [
-      ".*",
-      "build.js",
-      "index.html",
-      "component.json",
-      "bower.json",
-      "benchmark",
-      "page",
-      "test",
-      "vendor"
-    ]
-  },
-  "devDependencies": {
-    "curl-amd": "~0.8.12",
-    "highlight.js": "~8.3.0",
-    "marked": "~0.3.2",
-    "requirejs": "~2.1.15",
-    "spec": "~1.0.1",
-    "tar": "~1.0.2"
-  }
+
+    "maintainers": [{
+        "name": "LowerDimensions",
+        "email": "LowerDimensions@gmail.com",
+        "url": "https://github.com/LowerDimensions"
+    }],
+
+    "contributors" : [{
+
+        "email": "github@kitcambridge.be",
+        "name": "Kit Cambridge",
+        "url": "http://kitcambridge.be/"
+
+    },{
+
+        "email": "demoneaux@gmail.com",
+        "name": "Benjamin Tan",
+        "url": "https://d10.github.io/"
+
+    },{
+
+        "email": "olivier@webitup.fr",
+        "name": "Mangled Deutz",
+        "url": "http://tech.roxee.tv/"
+
+    },{
+
+        "email": "oyvind@kinsey.no",
+        "name": "Øyvind Sean Kinsey",
+        "url": "http://fb.me/ok"
+
+    },{
+
+        "email": "public@oxy.fi",
+        "name": "Oskar Schöldström",
+        "url": "http://oxy.fi/"
+
+    },{
+
+        "email": "rma4ok@gmail.com",
+        "name": "Kiryl Yermakou",
+        "url": "https://github.com/rma4ok"
+
+    }]
 }
