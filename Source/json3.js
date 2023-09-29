@@ -1,4 +1,6 @@
 
+export { jsonify }
+
 // A set of types used to distinguish objects from primitives.
 var objectTypes = {
     "function": true,
@@ -10,6 +12,7 @@ var objectTypes = {
 // Convenience aliases.
 var objectProto = Object.prototype,
     getClass = objectProto.toString,
+    isProperty = objectProto.hasOwnProperty,
     undefined;
 
 // Internal: Contains `try...catch` logic used by other functions.
@@ -24,6 +27,74 @@ try {
 }
 }
 
+var functionClass = "[object Function]",
+    dateClass = "[object Date]",
+    numberClass = "[object Number]",
+    stringClass = "[object String]",
+    arrayClass = "[object Array]",
+    booleanClass = "[object Boolean]";
+
+    var forOwn = function (object, callback) {
+        var size = 0, Properties, dontEnums, property;
+    
+        // Tests for bugs in the current environment's `for...in` algorithm. The
+        // `valueOf` property inherits the non-enumerable flag from
+        // `Object.prototype` in older versions of IE, Netscape, and Mozilla.
+        (Properties = function () {
+        this.valueOf = 0;
+        }).prototype.valueOf = 0;
+    
+        // Iterate over a new instance of the `Properties` class.
+        dontEnums = new Properties();
+        for (property in dontEnums) {
+        // Ignore all properties inherited from `Object.prototype`.
+        if (isProperty.call(dontEnums, property)) {
+            size++;
+        }
+        }
+        Properties = dontEnums = null;
+    
+        // Normalize the iteration algorithm.
+        if (!size) {
+        // A list of non-enumerable properties inherited from `Object.prototype`.
+        dontEnums = ["valueOf", "toString", "toLocaleString", "propertyIsEnumerable", "isPrototypeOf", "hasOwnProperty", "constructor"];
+        // IE <= 8, Mozilla 1.0, and Netscape 6.2 ignore shadowed non-enumerable
+        // properties.
+        forOwn = function (object, callback) {
+            var isFunction = getClass.call(object) == functionClass, property, length;
+            var hasProperty = !isFunction && typeof object.constructor != "function" && objectTypes[typeof object.hasOwnProperty] && object.hasOwnProperty || isProperty;
+            for (property in object) {
+            // Gecko <= 1.0 enumerates the `prototype` property of functions under
+            // certain conditions; IE does not.
+            if (!(isFunction && property == "prototype") && hasProperty.call(object, property)) {
+                callback(property);
+            }
+            }
+            // Manually invoke the callback for each non-enumerable property.
+            for (length = dontEnums.length; property = dontEnums[--length];) {
+            if (hasProperty.call(object, property)) {
+                callback(property);
+            }
+            }
+        };
+        } else {
+        // No bugs detected; use the standard `for...in` algorithm.
+        forOwn = function (object, callback) {
+            var isFunction = getClass.call(object) == functionClass, property, isConstructor;
+            for (property in object) {
+            if (!(isFunction && property == "prototype") && isProperty.call(object, property) && !(isConstructor = property === "constructor")) {
+                callback(property);
+            }
+            }
+            // Manually invoke the callback for the `constructor` property due to
+            // cross-environment inconsistencies.
+            if (isConstructor || isProperty.call(object, (property = "constructor"))) {
+            callback(property);
+            }
+        };
+        }
+        return forOwn(object, callback);
+    };
 
 
 // Public: Serializes a JavaScript `value` as a JSON string. The optional
@@ -121,25 +192,7 @@ serializeDate = function (value) {
 return serializeDate(value);
 };
 
-// For environments with `JSON.stringify` but buggy date serialization,
-// we override the native `Date#toJSON` implementation with a
-// spec-compliant one.
-if (has("json-stringify") && !has("date-serialization")) {
-// Internal: the `Date#toJSON` implementation used to override the native one.
-function dateToJSON (key) {
-    return serializeDate(this);
-}
 
-// Public: `JSON.stringify`. See ES 5.1 section 15.12.3.
-var nativeStringify = exports.stringify;
-exports.stringify = function (source, filter, width) {
-    var nativeToJSON = Date.prototype.toJSON;
-    Date.prototype.toJSON = dateToJSON;
-    var result = nativeStringify(source, filter, width);
-    Date.prototype.toJSON = nativeToJSON;
-    return result;
-}
-} else {
 // Internal: Double-quotes a string `value`, replacing all ASCII control
 // characters (characters with code unit values between 0 and 31) with
 // their escaped equivalents. This is an implementation of the
@@ -255,8 +308,8 @@ var serialize = function (property, object, callback, properties, whitespace, in
     }
 };
 
-// Public: `JSON.stringify`. See ES 5.1 section 15.12.3.
-exports.stringify = function (source, filter, width) {
+
+function jsonify (source, filter, width) {
     var whitespace, callback, properties, className;
     if (objectTypes[typeof filter] && filter) {
     className = getClass.call(filter);
@@ -296,5 +349,4 @@ exports.stringify = function (source, filter, width) {
     // (e.g., `!("" in { "": 1})`).
     return serialize("", (value = {}, value[""] = source, value), callback, properties, whitespace, "", []);
 };
-}
 
